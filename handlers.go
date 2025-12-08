@@ -1,0 +1,93 @@
+package jwt
+
+import (
+	"encoding/json"
+	"io"
+	"net/http"
+)
+
+func writeJSONError(w http.ResponseWriter, status int, msg string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+
+	resp := map[string]any{
+		"error": msg,
+	}
+
+	json.NewEncoder(w).Encode(resp)
+}
+
+func parseJSONBody[T any](r *http.Request) (T, error) {
+	var dto T
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		return dto, err
+	}
+	err = json.Unmarshal(body, &dto)
+	return dto, err
+}
+
+func (a *Auth) LoginHandler(res http.ResponseWriter, req *http.Request) {
+	reqDto, err := parseJSONBody[loginRequest](req)
+	if err != nil {
+		writeJSONError(res, http.StatusBadRequest, errCannotDeserializeRequest)
+		return
+	}
+
+	tokenPair, err := a.usecase.Login(reqDto.Username, reqDto.Password)
+
+	if err != nil {
+		// error handling
+	}
+
+	resDto := loginResponse{Access: tokenPair.Access, Refresh: tokenPair.Refresh}
+
+	data, err := json.Marshal(resDto)
+	if err != nil {
+		writeJSONError(res, http.StatusInternalServerError, errCannotSerializeResponse)
+		return
+	}
+
+	res.Write(data)
+	res.WriteHeader(http.StatusOK)
+}
+func (a *Auth) RefreshHandler(res http.ResponseWriter, req *http.Request) {
+	reqDto, err := parseJSONBody[refreshRequest](req)
+	if err != nil {
+		writeJSONError(res, http.StatusBadRequest, errCannotDeserializeRequest)
+		return
+	}
+
+	token, err := a.usecase.Refresh(reqDto.Token)
+
+	if err != nil {
+		// error handling
+	}
+
+	resDto := refreshResponse{Token: string(token)}
+
+	data, err := json.Marshal(resDto)
+	if err != nil {
+		writeJSONError(res, http.StatusInternalServerError, errCannotSerializeResponse)
+		return
+	}
+
+	res.Write(data)
+	res.WriteHeader(http.StatusOK)
+}
+
+func (a *Auth) LogoutHandler(res http.ResponseWriter, req *http.Request) {
+	reqDto, err := parseJSONBody[logoutRequest](req)
+	if err != nil {
+		writeJSONError(res, http.StatusBadRequest, errCannotDeserializeRequest)
+		return
+	}
+
+	err = a.usecase.Logout(reqDto.Token)
+
+	if err != nil {
+		// error handling
+	}
+
+	res.WriteHeader(http.StatusNoContent)
+}

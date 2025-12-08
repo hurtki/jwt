@@ -11,7 +11,7 @@ profile.cov
 go.work
 go.work.sum
 .env
-/module_test
+main.go
 
 
 

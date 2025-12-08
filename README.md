@@ -7,7 +7,8 @@ Auth middleware module on jwt tokens
 - login handler
 - logout handler
 - authorization MiddleWare
-- OnLogin, OnLogout hooks
+- Invalidate hook
+- OnLogin, OnLogout hooks options
 
 ## Example
 
@@ -21,7 +22,9 @@ hooks := NewHooks(logger)
 usecase := NewUseCase(userRepo, hooks)
 tasksHandler := NewTasksHandler(usecase)
 
-auth := jwt.NewAuth(db, userRepo.Authorize, hooks.OnLogin, hooks.OnLogout)
+authHooks := jwt.AuthHooks{OnLogin: hooks.OnLogin, OnLogout: hooks.OnLogout}
+
+auth := jwt.NewAuth(db, userRepo.Authorize, authHooks)
 
 rtr.Handle("/login", auth.LoginHandler)
 rtr.Handle("/refresh", auth.RefreshHandler)
