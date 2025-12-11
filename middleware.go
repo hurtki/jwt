@@ -10,7 +10,7 @@ import (
 
 func (a *Auth) WithAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		token, err := GetTokenFromHeader(r)
+		token, err := getTokenFromHeader(r)
 		if err != nil {
 			writeJSONError(w, http.StatusBadRequest, err.Error())
 			return
@@ -36,7 +36,7 @@ func (a *Auth) WithAuth(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func GetTokenFromHeader(r *http.Request) (string, error) {
+func getTokenFromHeader(r *http.Request) (string, error) {
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
 		return "", errAuthorizationHeaderMissing
