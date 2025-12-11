@@ -1,6 +1,6 @@
-# jwt
+# jwt - Auth module on jwt tokens
 
-Auth middleware module on jwt tokens
+![logo](https://raw.githubusercontent.com/hurtki/jwt/e870a87f7a35cd8299f8132b2b65a297cbd2ea2d/_0c406445-2e41-40c6-a03c-c9cdfd02c7b3.jpeg)
 
 ## Endpoints
 
