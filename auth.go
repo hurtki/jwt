@@ -16,6 +16,7 @@ type AuthorizeFunc func(username, password string) (user_id int, err error)
 
 // Module for authorization based on jwt tokens
 type Auth struct {
+	config  config.AuthConfig
 	usecase *domain.UseCase
 }
 
@@ -32,7 +33,7 @@ func NewAuth(db *sql.DB, authFunc AuthorizeFunc, config config.AuthConfig) (*Aut
 	}
 
 	usecase, err := domain.NewUseCase(repo, domain.UserLoginFunc(authFunc), config)
-	return &Auth{usecase: usecase}, nil
+	return &Auth{usecase: usecase, config: config}, nil
 }
 
 func NewConfig(secretKey string) config.AuthConfig {
@@ -42,5 +43,6 @@ func NewConfig(secretKey string) config.AuthConfig {
 		RefreshTokenExpireTime: time.Hour * 24 * 7,
 		OnLogin:                nil,
 		OnLogout:               nil,
+		UserIdContextKeyName:   "user_id",
 	}
 }

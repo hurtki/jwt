@@ -17,4 +17,7 @@ type AuthConfig struct {
 	OnLogin Hook
 	// hook that will be used after success logout
 	OnLogout Hook
+
+	// name of key that will be inserted into ctx, for handlers that use WithAuth middleware
+	UserIdContextKeyName string
 }

@@ -32,7 +32,7 @@ func parseJSONBody[T any](r *http.Request) (T, error) {
 func (a *Auth) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	reqDto, err := parseJSONBody[loginRequest](req)
 	if err != nil {
-		writeJSONError(res, http.StatusBadRequest, errCannotDeserializeRequest)
+		writeJSONError(res, http.StatusBadRequest, errCannotDeserializeRequest.Error())
 		return
 	}
 
@@ -52,7 +52,7 @@ func (a *Auth) LoginHandler(res http.ResponseWriter, req *http.Request) {
 
 	data, err := json.Marshal(resDto)
 	if err != nil {
-		writeJSONError(res, http.StatusInternalServerError, errCannotSerializeResponse)
+		writeJSONError(res, http.StatusInternalServerError, errCannotSerializeResponse.Error())
 		return
 	}
 
@@ -62,7 +62,7 @@ func (a *Auth) LoginHandler(res http.ResponseWriter, req *http.Request) {
 func (a *Auth) RefreshHandler(res http.ResponseWriter, req *http.Request) {
 	reqDto, err := parseJSONBody[refreshRequest](req)
 	if err != nil {
-		writeJSONError(res, http.StatusBadRequest, errCannotDeserializeRequest)
+		writeJSONError(res, http.StatusBadRequest, errCannotDeserializeRequest.Error())
 		return
 	}
 
@@ -86,7 +86,7 @@ func (a *Auth) RefreshHandler(res http.ResponseWriter, req *http.Request) {
 
 	data, err := json.Marshal(resDto)
 	if err != nil {
-		writeJSONError(res, http.StatusInternalServerError, errCannotSerializeResponse)
+		writeJSONError(res, http.StatusInternalServerError, errCannotSerializeResponse.Error())
 		return
 	}
 
@@ -97,7 +97,7 @@ func (a *Auth) RefreshHandler(res http.ResponseWriter, req *http.Request) {
 func (a *Auth) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 	reqDto, err := parseJSONBody[logoutRequest](req)
 	if err != nil {
-		writeJSONError(res, http.StatusBadRequest, errCannotDeserializeRequest)
+		writeJSONError(res, http.StatusBadRequest, errCannotDeserializeRequest.Error())
 		return
 	}
 
