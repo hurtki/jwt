@@ -14,14 +14,14 @@ var (
 )
 
 type jwtHeader struct {
-	algorithm string
-	tokenType string
+	Algorithm string `json:"alg"`
+	TokenType string `json:"typ"`
 }
 
 func NewHs256JwtHeader() jwtHeader {
 	return jwtHeader{
-		algorithm: algHs256,
-		tokenType: tokenType,
+		Algorithm: algHs256,
+		TokenType: tokenType,
 	}
 }
 
@@ -75,18 +75,20 @@ func ParseAndVerifyJwt(
 
 	jwtHeader := jwtHeader{}
 
-	json.Unmarshal(headersDecoded, &jwtHeader)
-
-	if jwtHeader.tokenType != "jwt" {
+	if err := json.Unmarshal(headersDecoded, &jwtHeader); err != nil {
 		return ErrInvalidJWT
 	}
 
-	if jwtHeader.algorithm != algHs256 {
+	if jwtHeader.TokenType != "jwt" {
+		return ErrInvalidJWT
+	}
+
+	if jwtHeader.Algorithm != algHs256 {
 		return ErrInvalidJWT
 	}
 
 	// checking token sign
-	switch jwtHeader.algorithm {
+	switch jwtHeader.Algorithm {
 	case algHs256:
 		msg := []byte(hEnc + "." + pEnc)
 		if b64Encode(signHS256(msg, secret)) != sEnc {

@@ -3,20 +3,16 @@ package jwt
 import (
 	"database/sql"
 	"errors"
+	"time"
 
+	"github.com/hurtki/jwt/config"
 	"github.com/hurtki/jwt/domain"
-	"github.com/hurtki/jwt/repo"
+	pg_repo "github.com/hurtki/jwt/repo/pg"
 )
 
 // Authoorize func is a function/method that Auth recieves as a dependency
 // Auth will use to login users on Auth.LoginHandler
 type AuthorizeFunc func(username, password string) (user_id int, err error)
-
-// AuthHooks is needed if you want to specify Hooks for Auth.LoginHandler and Auth.Logiut handler
-type AuthHooks struct {
-	OnLogin  func(user_id int)
-	OnLogout func(user_id int)
-}
 
 // Module for authorization based on jwt tokens
 type Auth struct {
@@ -25,8 +21,8 @@ type Auth struct {
 
 // db - postgres database ( ready connection, module won't change settings of conneciton )
 // authFunc - required function to authorize user on Auth.LoginHandler, hooks not required filds( can be bull )
-func NewAuth(db *sql.DB, authFunc AuthorizeFunc, hooks AuthHooks) (*Auth, error) {
-	repo, err := repo.NewAuthRepo(db)
+func NewAuth(db *sql.DB, authFunc AuthorizeFunc, config config.AuthConfig) (*Auth, error) {
+	repo, err := pg_repo.NewAuthRepo(db)
 	if err != nil {
 		return nil, err
 	}
@@ -35,6 +31,16 @@ func NewAuth(db *sql.DB, authFunc AuthorizeFunc, hooks AuthHooks) (*Auth, error)
 		return nil, errors.New("can't create Auth without authFunc ( authFunc cannot be nil )")
 	}
 
-	usecase, err := domain.NewUseCase(repo, domain.UserLoginFunc(authFunc), hooks.OnLogin, hooks.OnLogout)
+	usecase, err := domain.NewUseCase(repo, domain.UserLoginFunc(authFunc), config)
 	return &Auth{usecase: usecase}, nil
+}
+
+func NewConfig(secretKey string) config.AuthConfig {
+	return config.AuthConfig{
+		AppSecretKey:           []byte(secretKey),
+		AccessTokenExpireTime:  time.Minute * 15,
+		RefreshTokenExpireTime: time.Hour * 24 * 7,
+		OnLogin:                nil,
+		OnLogout:               nil,
+	}
 }

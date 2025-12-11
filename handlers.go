@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+
+	"github.com/hurtki/jwt/domain"
 )
 
 func writeJSONError(w http.ResponseWriter, status int, msg string) {
@@ -37,7 +39,13 @@ func (a *Auth) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	tokenPair, err := a.usecase.Login(reqDto.Username, reqDto.Password)
 
 	if err != nil {
-		// error handling
+		if err == domain.ErrCannotAuthorizeUser {
+			writeJSONError(res, http.StatusUnauthorized, err.Error())
+			return
+		} else {
+			writeJSONError(res, http.StatusInternalServerError, err.Error())
+			return
+		}
 	}
 
 	resDto := loginResponse{Access: tokenPair.Access, Refresh: tokenPair.Refresh}
@@ -48,8 +56,8 @@ func (a *Auth) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	res.Write(data)
 	res.WriteHeader(http.StatusOK)
+	res.Write(data)
 }
 func (a *Auth) RefreshHandler(res http.ResponseWriter, req *http.Request) {
 	reqDto, err := parseJSONBody[refreshRequest](req)
@@ -61,7 +69,17 @@ func (a *Auth) RefreshHandler(res http.ResponseWriter, req *http.Request) {
 	token, err := a.usecase.Refresh(reqDto.Token)
 
 	if err != nil {
-		// error handling
+		switch err {
+		case domain.ErrInvalidRefreshToken:
+			writeJSONError(res, http.StatusUnauthorized, err.Error())
+			return
+		case domain.ErrCannotRefreshToken:
+			writeJSONError(res, http.StatusInternalServerError, err.Error())
+			return
+		default:
+			writeJSONError(res, http.StatusInternalServerError, err.Error())
+			return
+		}
 	}
 
 	resDto := refreshResponse{Token: string(token)}
@@ -72,8 +90,8 @@ func (a *Auth) RefreshHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	res.Write(data)
 	res.WriteHeader(http.StatusOK)
+	res.Write(data)
 }
 
 func (a *Auth) LogoutHandler(res http.ResponseWriter, req *http.Request) {
@@ -86,7 +104,17 @@ func (a *Auth) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 	err = a.usecase.Logout(reqDto.Token)
 
 	if err != nil {
-		// error handling
+		switch err {
+		case domain.ErrInvalidRefreshToken:
+			writeJSONError(res, http.StatusUnauthorized, err.Error())
+			return
+		case domain.ErrCannotRevokeToken:
+			writeJSONError(res, http.StatusInternalServerError, err.Error())
+			return
+		default:
+			writeJSONError(res, http.StatusInternalServerError, err.Error())
+			return
+		}
 	}
 
 	res.WriteHeader(http.StatusNoContent)
