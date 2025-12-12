@@ -30,7 +30,7 @@ type authRepo interface {
 	CheckToken(tokenB64Hash string) (userId int, err error)
 }
 
-func NewUseCase(repo authRepo, userLoginFunc UserLoginFunc, config config.AuthConfig) (*UseCase, error) {
+func NewUseCase(repo authRepo, userLoginFunc UserLoginFunc, config config.AuthConfig) *UseCase {
 	useCase := &UseCase{repo: repo, cfg: config, userLoginFunc: userLoginFunc}
 
 	if useCase.cfg.OnLogin == nil {
@@ -39,7 +39,7 @@ func NewUseCase(repo authRepo, userLoginFunc UserLoginFunc, config config.AuthCo
 	if useCase.cfg.OnLogout == nil {
 		useCase.cfg.OnLogout = NoopHook
 	}
-	return useCase, nil
+	return useCase
 }
 
 func (u *UseCase) Login(username, password string) (TokenPair, error) {

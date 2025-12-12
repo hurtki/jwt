@@ -32,7 +32,7 @@ func NewAuth(db *sql.DB, authFunc AuthorizeFunc, config config.AuthConfig) (*Aut
 		return nil, errors.New("can't create Auth without authFunc ( authFunc cannot be nil )")
 	}
 
-	usecase, err := domain.NewUseCase(repo, domain.UserLoginFunc(authFunc), config)
+	usecase := domain.NewUseCase(repo, domain.UserLoginFunc(authFunc), config)
 	return &Auth{usecase: usecase, config: config}, nil
 }
 

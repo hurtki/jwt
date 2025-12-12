@@ -76,7 +76,7 @@ cfg := jwt.NewConfig("your secret key")
 // how much time will access token live after signing ( default 15 minutes )
 cfg.AccessTokenExpireTime = 15 * time.Minute
 // how much time will refresh token live after signing ( default 7 days )
-cfg.AccessTokenExpireTime = time.Hour * 24 * 7
+cfg.RefreshTokenExpireTime = time.Hour * 24 * 7
 // hooks should be with func(userId int) signature
 // On login hook, module will call it after success login ( default Noop )
 cfg.OnLogin = yourUseCase.OnLoginHook // example usage
