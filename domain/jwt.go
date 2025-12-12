@@ -13,11 +13,13 @@ var (
 	algHs256  = "hs256"
 )
 
+// jwt header
 type jwtHeader struct {
 	Algorithm string `json:"alg"`
 	TokenType string `json:"typ"`
 }
 
+// NewHs256JwtHeader creates new header filled with alg: "hs256" and "jwt" tokenType
 func NewHs256JwtHeader() jwtHeader {
 	return jwtHeader{
 		Algorithm: algHs256,
@@ -39,9 +41,10 @@ func signHS256(msg, secret []byte) []byte {
 	return mac.Sum(nil)
 }
 
+// SignJwtToken signs jwt token useing header payload and secret
 func SignJwtToken(header jwtHeader, payload any, secret []byte) string {
+	// not handling header and payload errors beacause ahhh
 	h, _ := json.Marshal(header)
-
 	p, _ := json.Marshal(payload)
 
 	hEnc := b64Encode(h)
@@ -55,6 +58,8 @@ func SignJwtToken(header jwtHeader, payload any, secret []byte) string {
 	return hEnc + "." + pEnc + "." + sEnc
 }
 
+// ParseAndVerifyJwt parses given token, checks if it is signed with given secret and if all ok ummarshals payload of token to payloadOut
+// if token or sign not valid function returns ErrInvalidJWT ( only error it can return )
 func ParseAndVerifyJwt(
 	token string,
 	secret []byte,

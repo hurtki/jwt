@@ -3,6 +3,7 @@ package domain
 import "errors"
 
 var (
+	// domain level errors, can be returned from handlers
 	ErrCannotAuthorizeUser = errors.New("cannot authorize user")
 	ErrExpiredAccessToken  = errors.New("expired access token")
 	ErrInvalidJWT          = errors.New("invalid jwt")

@@ -5,6 +5,8 @@ import (
 	"fmt"
 )
 
+// repo level errors, all implementations of repo interface in domain should return only them
+
 type ErrConflictValue struct{ Field string }
 
 func (e ErrConflictValue) Error() string {

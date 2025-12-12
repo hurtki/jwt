@@ -7,6 +7,7 @@ import (
 	"github.com/hurtki/jwt/repo"
 )
 
+// implementation of domain/authRepo interface
 type PgRepository struct {
 	db *sql.DB
 }
@@ -81,4 +82,4 @@ func (r *PgRepository) CheckToken(tokenB64Hash string) (userId int, err error) {
 	return userId, nil
 }
 
-// func (r *PgRepository) RevokeAllFromUser(userID int) error
+// TODO: func (r *PgRepository) RevokeAllFromUser(userID int) error

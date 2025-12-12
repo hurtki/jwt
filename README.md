@@ -46,22 +46,28 @@ rtr.Handle("/tasks", auth.WithAuth(tasks.Handler))
 ## Login
 
 req: {"username":"root","password":"qwerty1234"}
-res 200: {"access":"eyJ...","refresh":"0oUL..."}
+res 200: {"access_token":"eyJ...","refresh_token":"0oUL..."}
 
 ## Refresh
 
-req: {"token":"refresh_token"}
-res 200: {"token":"access_token"}
+req: {"refresh_token":""}
+res 200: {"access_token":""}
 
 ## Logout
 
-req: {"token":"refresh_token"}
+req: {"refresh_token":""}
 res 204: No Content
 
 ## Middleware
 
 Authorization: Bearer [access_token]
 → next handler / 401 if invalid
+
+## Errors
+
+All errors are returned like
+req: {"error": "error text"}
+
 ```
 
 ## Config

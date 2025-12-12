@@ -8,6 +8,9 @@ import (
 	"github.com/hurtki/jwt/domain"
 )
 
+// WithAuth - auth middleware for jwt tokens
+// checks Authorization header in request for "Bearer [jwt_token]"
+// error case req: {"error": ""}
 func (a *Auth) WithAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		token, err := getTokenFromHeader(r)
@@ -36,6 +39,7 @@ func (a *Auth) WithAuth(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+// heleper function to retrieve token from header or return readable error
 func getTokenFromHeader(r *http.Request) (string, error) {
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {

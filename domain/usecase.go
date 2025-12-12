@@ -11,6 +11,8 @@ type UserLoginFunc func(username, password string) (user_id int, err error)
 
 func NoopHook(user_id int) {}
 
+// domain level of clean architechture
+// uses repo interface and maps repo errors into domain
 type UseCase struct {
 	repo          authRepo
 	userLoginFunc UserLoginFunc
@@ -63,8 +65,6 @@ func (u *UseCase) Login(username, password string) (TokenPair, error) {
 	}
 
 	u.cfg.OnLogin(userId)
-
-	// maybe here i need to revoke previcouse token
 
 	return TokenPair{Access: accessToken, Refresh: refreshToken}, nil
 }

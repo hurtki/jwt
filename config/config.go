@@ -2,7 +2,7 @@ package config
 
 import "time"
 
-// signature for external function that auth will use as hooks
+// signature for external function that auth will use as hook
 type Hook func(userId int)
 
 type AuthConfig struct {

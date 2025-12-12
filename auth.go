@@ -36,6 +36,7 @@ func NewAuth(db *sql.DB, authFunc AuthorizeFunc, config config.AuthConfig) (*Aut
 	return &Auth{usecase: usecase, config: config}, nil
 }
 
+// NewConfig creates config with default fields, you can see defaults at definition
 func NewConfig(secretKey string) config.AuthConfig {
 	return config.AuthConfig{
 		AppSecretKey:           []byte(secretKey),

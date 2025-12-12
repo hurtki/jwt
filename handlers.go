@@ -2,12 +2,12 @@ package jwt
 
 import (
 	"encoding/json"
-	"io"
 	"net/http"
 
 	"github.com/hurtki/jwt/domain"
 )
 
+// helper function to write error to response as json "error" field
 func writeJSONError(w http.ResponseWriter, status int, msg string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
@@ -19,16 +19,15 @@ func writeJSONError(w http.ResponseWriter, status int, msg string) {
 	json.NewEncoder(w).Encode(resp)
 }
 
+// helper functin to Unmarshal request to dto structure
 func parseJSONBody[T any](r *http.Request) (T, error) {
 	var dto T
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		return dto, err
-	}
-	err = json.Unmarshal(body, &dto)
+	err := json.NewDecoder(r.Body).Decode(&dto)
 	return dto, err
 }
 
+// Login handler:
+// req: {"username": "", "password": ""} res: {"access_token": "", "refresh_token": ""} / {"error": ""}
 func (a *Auth) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	reqDto, err := parseJSONBody[loginRequest](req)
 	if err != nil {
@@ -59,6 +58,9 @@ func (a *Auth) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(http.StatusOK)
 	res.Write(data)
 }
+
+// Refresh handler:
+// req: {"refresh_token": ""} res: {"access_token:"} / {"error", ""}
 func (a *Auth) RefreshHandler(res http.ResponseWriter, req *http.Request) {
 	reqDto, err := parseJSONBody[refreshRequest](req)
 	if err != nil {
@@ -94,6 +96,8 @@ func (a *Auth) RefreshHandler(res http.ResponseWriter, req *http.Request) {
 	res.Write(data)
 }
 
+// Logout handler:
+// req: {"refresh_token": ""} res: StatusNoContent / {"error": ""}
 func (a *Auth) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 	reqDto, err := parseJSONBody[logoutRequest](req)
 	if err != nil {

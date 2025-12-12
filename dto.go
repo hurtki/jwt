@@ -5,19 +5,19 @@ type loginRequest struct {
 	Password string `json:"password"`
 }
 
-type refreshRequest struct {
-	Token string `json:"token"`
-}
-
-type logoutRequest struct {
-	Token string `json:"token"`
-}
-
 type loginResponse struct {
-	Access  string `json:"access"`
-	Refresh string `json:"refresh"`
+	Access  string `json:"access_token"`
+	Refresh string `json:"refresh_token"`
+}
+
+type refreshRequest struct {
+	Token string `json:"refresh_token"`
 }
 
 type refreshResponse struct {
-	Token string `json:"token"`
+	Token string `json:"access_token"`
+}
+
+type logoutRequest struct {
+	Token string `json:"refresh_token"`
 }
