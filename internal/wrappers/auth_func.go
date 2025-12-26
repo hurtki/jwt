@@ -1,4 +1,4 @@
-package domain
+package wrappers
 
 import (
 	"encoding/json"
@@ -8,17 +8,82 @@ import (
 	"time"
 )
 
+func WrapAuthFunc(rawAuthFunc any) (AuthFunc, AuthInputType, PayloadType) {
+	fnT := reflect.TypeOf(rawAuthFunc)
+	fn := reflect.ValueOf(rawAuthFunc)
+
+	// validation
+
+	if fnT.Kind() != reflect.Func {
+		panic("not function")
+	}
+
+	// TODO validation of Ins and Iuts
+	ait := NewAuthInputType(reflect.New(fnT.In(0)).Interface())
+	plt := NewPayloadType(reflect.New(fnT.Out(0)).Interface())
+
+	return func(wrapper AuthInputWrapper) (PayloadWrapper, error) {
+		authInputValue := reflect.ValueOf(wrapper.Original()).Elem()
+
+		args := []reflect.Value{
+			authInputValue,
+		}
+
+		results := fn.Call(args)
+		res, errVal := results[0], results[1]
+
+		if !errVal.IsNil() {
+			return PayloadWrapper{}, errVal.Interface().(error)
+		}
+
+		pw := plt.New()
+		reflect.ValueOf(pw.orig).Elem().Set(res)
+
+		return pw, nil
+	}, ait, plt
+}
+
+// ====== auth input wraps ======
+
+type AuthInputType struct {
+	t reflect.Type
+}
+
+// NewAuthInputType saves objects type to AuthInputType
+// obj should be struct, not pointer
+func NewAuthInputType(obj any) AuthInputType {
+	t := reflect.TypeOf(obj)
+
+	if t.Kind() == reflect.Pointer {
+		t = t.Elem()
+	}
+
+	if t.Kind() != reflect.Struct {
+		panic("NewAuthInputType only supports structs")
+	}
+	return AuthInputType{t: t}
+}
+
+func (it *AuthInputType) New() AuthInputWrapper {
+	orig := reflect.New(it.t).Interface()
+	return AuthInputWrapper{
+		orig: orig,
+	}
+}
+
 type AuthInputWrapper struct {
 	orig any
 }
 
-func (w *AuthInputWrapper) Original() any {
-	return w.orig
+func (aiw *AuthInputWrapper) Original() any {
+	return aiw.orig
 }
 
 func (w *AuthInputWrapper) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, w.orig)
 }
+
+// ====== payload wraps ======
 
 // PayloadType contains type of customized jwt token payload
 // Payload can create PayloadWrapper of its type with method NewPayloadWrapper
@@ -30,6 +95,9 @@ type PayloadType struct {
 // obj should be struct, not pointer
 func NewPayloadType(obj any) PayloadType {
 	t := reflect.TypeOf(obj)
+	if t.Kind() == reflect.Pointer {
+		t = t.Elem()
+	}
 	if t.Kind() != reflect.Struct {
 		panic("TypeWrapper only supports structs")
 	}
@@ -43,6 +111,10 @@ type PayloadWrapper struct {
 	orig any
 	// Expire at contains jwt token expire time
 	ExpireAt time.Time `json:"exp"`
+}
+
+func (pl *PayloadWrapper) Original() any {
+	return pl.orig
 }
 
 // New creates PayloadWrapper based on PayloadType's saved type
@@ -61,7 +133,8 @@ func (pw *PayloadWrapper) MarshalJSON() ([]byte, error) {
 
 	v := reflect.ValueOf(pw.orig)
 	t := reflect.TypeOf(pw.orig)
-	if t.Kind() == reflect.Ptr {
+
+	if t.Kind() == reflect.Pointer {
 		v = v.Elem()
 		t = t.Elem()
 	}

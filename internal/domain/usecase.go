@@ -4,67 +4,55 @@ import (
 	"time"
 
 	"github.com/hurtki/jwt/config"
-	"github.com/hurtki/jwt/repo"
+	"github.com/hurtki/jwt/internal/adapters"
+	"github.com/hurtki/jwt/internal/repo"
+	"github.com/hurtki/jwt/internal/wrappers"
 )
 
-type UserLoginFunc func(username, password string) (user_id int, err error)
+type AuthFunc func(wrappers.AuthInputWrapper) (wrappers.PayloadWrapper, error)
 
 func NoopHook(user_id int) {}
 
 // domain level of clean architechture
 // uses repo interface and maps repo errors into domain
 type UseCase struct {
-	repo          authRepo
-	userLoginFunc UserLoginFunc
-	cfg           config.AuthConfig
-}
-
-// TODO: add dynamic fields as map to add endpoing to add other information to payload and througing it further ( middleware )
-type jwtPayload struct {
-	UserID  int       `json:"user_id"`
-	Expires time.Time `json:"exp"`
+	repo     authRepo
+	authFunc AuthFunc
+	cfg      config.AuthConfig
+	adapter  adapters.UseCaseAdapter
 }
 
 type authRepo interface {
-	AddRefreshToken(userId int, tokenB64Hash string, expriesAt time.Time) error
-	RevokeToken(tokenB64Hash string) (userId int, err error)
-	//	RevokeAllFromUser(userID int) error
-	CheckToken(tokenB64Hash string) (userId int, err error)
+	AddRefreshToken(tokenB64Hash string, expriesAt time.Time) error
+	RevokeToken(tokenB64Hash string) (err error)
+	CheckToken(tokenB64Hash string) (err error)
 }
 
-func NewUseCase(repo authRepo, userLoginFunc UserLoginFunc, config config.AuthConfig) *UseCase {
-	useCase := &UseCase{repo: repo, cfg: config, userLoginFunc: userLoginFunc}
-
-	if useCase.cfg.OnLogin == nil {
-		useCase.cfg.OnLogin = NoopHook
-	}
-	if useCase.cfg.OnLogout == nil {
-		useCase.cfg.OnLogout = NoopHook
-	}
-	return useCase
+func NewUseCase(repo authRepo, authFunc AuthFunc, config config.AuthConfig) *UseCase {
+	return &UseCase{repo: repo, cfg: config, authFunc: authFunc}
 }
 
-func (u *UseCase) Login(username, password string) (TokenPair, error) {
-	userId, err := u.userLoginFunc(username, password)
+func (u *UseCase) Login(authInput wrappers.AuthInputWrapper) (TokenPair, error) {
+	payload, err := u.authFunc(authInput)
 	if err != nil {
 		// TODO: create some logic to handle errors from userLogincFunc
 		return TokenPair{}, ErrCannotAuthorizeUser
 	}
 
-	payload := jwtPayload{UserID: userId, Expires: time.Now().Add(u.cfg.AccessTokenExpireTime)}
+	payload.ExpireAt = time.Now().Add(u.cfg.AccessTokenExpireTime)
 
 	accessToken := SignJwtToken(NewHs256JwtHeader(), payload, u.cfg.AppSecretKey)
 	refreshToken := GenNewRefreshToken()
 
 	refreshTokenHash := HashB64(refreshToken)
 
-	err = u.repo.AddRefreshToken(userId, refreshTokenHash, time.Now().Add(u.cfg.RefreshTokenExpireTime))
+	err = u.repo.AddRefreshToken(refreshTokenHash, time.Now().Add(u.cfg.RefreshTokenExpireTime))
 
 	if err != nil {
 		return TokenPair{}, ErrCannotAuthorizeUser
 	}
 
-	u.cfg.OnLogin(userId)
+	u.adapter.HookWrapper.Call(payload)
 
 	return TokenPair{Access: accessToken, Refresh: refreshToken}, nil
 }
@@ -73,6 +61,7 @@ func (u *UseCase) Refresh(token string) (AccessToken, error) {
 	refreshTokenHash := HashB64(token)
 
 	userId, err := u.repo.CheckToken(refreshTokenHash)
+
 	if err != nil {
 		if err == repo.ErrNothingFound {
 			return AccessToken(""), ErrInvalidRefreshToken
